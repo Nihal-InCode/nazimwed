@@ -12,14 +12,32 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: weddingConfig.meta.title,
   description: weddingConfig.meta.description,
+  metadataBase: new URL("https://nazimwed.vercel.app"),
   openGraph: {
     title: weddingConfig.meta.title,
     description: weddingConfig.meta.description,
     type: "website",
     locale: "en_IN",
+    siteName: "Wedding Invitation | Muhammed Nazim HF & Nafeesathul Misriya Wafiya",
+    images: [
+      {
+        url: "/images/wedding-hands-bg.jpg",
+        width: 1200,
+        height: 800,
+        alt: "Wedding Invitation - Muhammed Nazim HF & Nafeesathul Misriya Wafiya",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: weddingConfig.meta.title,
+    description: weddingConfig.meta.description,
+    images: ["/images/wedding-hands-bg.jpg"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
@@ -31,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
