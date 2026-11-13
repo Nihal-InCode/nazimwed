@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Navigation, Heart, Sparkles } from "lucide-react";
 import { WeddingEvent } from "@/types/wedding";
 import { GoldFlourishDivider, CornerOrnament } from "./IslamicPattern";
@@ -11,7 +11,25 @@ interface EventCardsProps {
 }
 
 export const EventCards: React.FC<EventCardsProps> = ({ events }) => {
+  const [savedEventId, setSavedEventId] = useState<string | null>(null);
+  const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const calendarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   if (!events || events.length === 0) return null;
+
+  const playSaveAnimation = (eventId: string) => {
+    setSavedEventId(eventId);
+    if (heartTimer.current) clearTimeout(heartTimer.current);
+    heartTimer.current = setTimeout(() => setSavedEventId(null), 650);
+  };
+
+  const openCalendarAfterAnimation = (event: WeddingEvent) => {
+    playSaveAnimation(event.id);
+    if (calendarTimer.current) clearTimeout(calendarTimer.current);
+    calendarTimer.current = setTimeout(() => {
+      window.open(createGoogleCalendarUrl(event), "_blank", "noopener,noreferrer");
+    }, 600);
+  };
 
   const createGoogleCalendarUrl = (event: WeddingEvent) => {
     const title = encodeURIComponent(event.title);
@@ -19,7 +37,12 @@ export const EventCards: React.FC<EventCardsProps> = ({ events }) => {
       `${event.subtitle || "Wedding Event"}\nVenue: ${event.venueName}\nAddress: ${event.address}\n${event.note || ""}`
     );
     const location = encodeURIComponent(`${event.venueName}, ${event.address}`);
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`;
+    const formatCalendarTime = (dateTime: string) =>
+      new Date(dateTime).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const dates = event.calendarStart && event.calendarEnd
+      ? `&dates=${formatCalendarTime(event.calendarStart)}/${formatCalendarTime(event.calendarEnd)}`
+      : "";
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}${dates}`;
   };
 
   const isSingleEvent = events.length === 1;
@@ -79,9 +102,32 @@ export const EventCards: React.FC<EventCardsProps> = ({ events }) => {
               <div className="space-y-6">
                 {/* Header Badge & Icon */}
                 <div className="flex items-center justify-between">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-900 border-2 border-gold-500/50 shadow-md group-hover:scale-110 group-hover:shadow-gold transition-all duration-300">
-                    <Heart className="h-6 w-6 text-gold-champagne fill-gold-500/20" />
-                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Add ${event.title} to Google Calendar`}
+                    title="Add to Google Calendar"
+                    onClick={() => openCalendarAfterAnimation(event)}
+                    className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gold-500/50 bg-emerald-900 shadow-md transition-all duration-300 hover:scale-110 hover:shadow-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2"
+                  >
+                    <motion.div
+                      animate={savedEventId === event.id ? { scale: [1, 1.65, 0.92, 1], rotate: [0, -8, 6, 0] } : { scale: 1, rotate: 0 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className="relative"
+                    >
+                      <Heart className="h-6 w-6 fill-gold-500/20 text-gold-champagne" />
+                      <AnimatePresence>
+                        {savedEventId === event.id && (
+                          <motion.span
+                            initial={{ scale: 0.4, opacity: 0.9 }}
+                            animate={{ scale: 2.1, opacity: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.55, ease: "easeOut" }}
+                            className="pointer-events-none absolute inset-0 rounded-full border-2 border-gold-300"
+                          />
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  </button>
                   <span className="inline-flex items-center space-x-1.5 text-xs uppercase tracking-widest font-bold px-4 py-1.5 rounded-full bg-emerald-100/80 text-emerald-950 border border-gold-500/30">
                     <Sparkles className="h-3.5 w-3.5 text-gold-600" />
                     <span>Main Ceremony</span>
