@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { weddingConfig } from "@/config/wedding";
 import { EnvelopeOpening } from "@/components/EnvelopeOpening";
 import { LivingBackground } from "@/components/LivingBackground";
@@ -8,7 +8,6 @@ import { HeroInvitation } from "@/components/HeroInvitation";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { EventCards } from "@/components/EventCards";
 import { VenueSection } from "@/components/VenueSection";
-import { RsvpSection } from "@/components/RsvpSection";
 import { WeddingFooter } from "@/components/WeddingFooter";
 import { FloatingActions } from "@/components/FloatingActions";
 
@@ -16,6 +15,15 @@ export default function WeddingPage() {
   const [showEnvelope, setShowEnvelope] = useState(
     weddingConfig.options.enableEnvelopeOpening
   );
+  const backgroundAudio = useRef<HTMLAudioElement>(null);
+
+  const startBackgroundAudio = () => {
+    const audio = backgroundAudio.current;
+    if (!audio) return;
+
+    audio.volume = 0.28;
+    void audio.play().catch(() => undefined);
+  };
 
   return (
     <main className="relative min-h-screen bg-ivory-50 overflow-hidden text-emerald-950">
@@ -24,8 +32,11 @@ export default function WeddingPage() {
         <EnvelopeOpening
           config={weddingConfig}
           onOpenComplete={() => setShowEnvelope(false)}
+          onSealBreak={startBackgroundAudio}
         />
       )}
+
+      <audio ref={backgroundAudio} src="/audio/wedding-nasheed.mp3" loop preload="auto" />
 
       {/* 2. Living Animated Background (Glowing Orbs + Floating Jasmine Petals + Gold Stardust) */}
       <LivingBackground />
@@ -47,16 +58,13 @@ export default function WeddingPage() {
       {/* 6. Location & Google Maps Navigation */}
       <VenueSection config={weddingConfig} />
 
-      {/* 7. WhatsApp RSVP System */}
-      <RsvpSection config={weddingConfig} />
-
-      {/* 8. Footer & Traditional Blessings with Nihal's Signature */}
+      {/* 7. Footer & Traditional Blessings with Nihal's Signature */}
       <WeddingFooter
         config={weddingConfig}
         onReopenEnvelope={() => setShowEnvelope(true)}
       />
 
-      {/* 9. Floating Quick Share Action */}
+      {/* 8. Floating Quick Share Action */}
       <FloatingActions
         config={weddingConfig}
         onReopenEnvelope={() => setShowEnvelope(true)}

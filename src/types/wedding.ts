@@ -19,6 +19,8 @@ export interface WeddingEvent {
   subtitle?: string;
   date: string;
   time: string;
+  calendarStart?: string;
+  calendarEnd?: string;
   venueName: string;
   address: string;
   googleMapsUrl: string;

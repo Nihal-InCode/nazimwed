@@ -48,7 +48,7 @@ export const LivingBackground: React.FC = () => {
           scale: [1, 1.04, 1],
         }}
         transition={{ repeat: Infinity, duration: 25, ease: "easeInOut" }}
-        className="absolute inset-0 bg-cover bg-center will-change-transform opacity-25 sm:opacity-20"
+        className="absolute inset-0 bg-cover bg-center will-change-transform opacity-[0.32] sm:opacity-[0.28]"
         style={{
           backgroundImage: "url('/images/wedding-hands-bg.jpg')",
           filter: "sepia(20%) saturate(110%)",
@@ -56,7 +56,7 @@ export const LivingBackground: React.FC = () => {
       />
 
       {/* 2. Soft Ivory & Champagne Radial Gradient Veil for 100% Text Legibility */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(252,250,246,0.72)_0%,_rgba(252,250,246,0.92)_70%,_rgba(248,244,235,0.98)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(252,250,246,0.67)_0%,_rgba(252,250,246,0.88)_70%,_rgba(248,244,235,0.95)_100%)]" />
 
       {/* 3. Subtle Ambient Golden & Emerald Aurora Glow Orbs */}
       <motion.div

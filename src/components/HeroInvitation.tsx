@@ -55,7 +55,7 @@ export const HeroInvitation: React.FC<HeroInvitationProps> = ({ config }) => {
 
             {/* Gold Flourish Divider */}
             <div className="w-full my-1 sm:my-2">
-              <GoldFlourishDivider />
+              <GoldFlourishDivider centerIcon="moon" />
             </div>
 
             {/* 2. Invitation Subheading */}

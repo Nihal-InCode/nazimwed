@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     description: weddingConfig.meta.description,
     type: "website",
     locale: "en_IN",
-    siteName: "Wedding Invitation | Muhammed Nazim HF & Nafeesathul Misriya Wafiya",
+    siteName: "Wedding Invitation | Muhammed Nazim HF & Nafeesathul Misriya Wafiyya",
     images: [
       {
         url: "/images/wedding-hands-bg.jpg",
         width: 1200,
         height: 800,
-        alt: "Wedding Invitation - Muhammed Nazim HF & Nafeesathul Misriya Wafiya",
+        alt: "Wedding Invitation - Muhammed Nazim HF & Nafeesathul Misriya Wafiyya",
       },
     ],
   },

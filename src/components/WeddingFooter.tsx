@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Heart, Sparkles, MailOpen, Instagram } from "lucide-react";
+import { Heart, MailOpen, Instagram } from "lucide-react";
 import { WeddingConfig } from "@/types/wedding";
 import { GoldFlourishDivider, IslamicStarPattern } from "./IslamicPattern";
 
@@ -20,8 +20,12 @@ export const WeddingFooter: React.FC<WeddingFooterProps> = ({
 
       <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center text-center space-y-6">
         {/* Monogram Seal */}
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-900 border-2 border-gold-500/50 shadow-gold">
-          <Sparkles className="h-6 w-6 text-gold-champagne" />
+        <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-gold-500/50 bg-emerald-950 shadow-gold">
+          <img
+            src="/images/ring.jpg"
+            alt="Wedding rings"
+            className="h-full w-full scale-125 object-cover object-center"
+          />
         </div>
 
         {/* Couple Names */}

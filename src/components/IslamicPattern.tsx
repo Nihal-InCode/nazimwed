@@ -95,8 +95,12 @@ export const IslamicStarPattern: React.FC<{
 };
 
 // Luxury Gold Flourish Divider with Animated Wings & Shimmer
-export const GoldFlourishDivider: React.FC<{ className?: string }> = ({
+export const GoldFlourishDivider: React.FC<{
+  className?: string;
+  centerIcon?: "star" | "moon";
+}> = ({
   className = "",
+  centerIcon = "star",
 }) => {
   return (
     <div
@@ -121,7 +125,11 @@ export const GoldFlourishDivider: React.FC<{ className?: string }> = ({
           viewBox="0 0 24 24"
           fill="currentColor"
         >
-          <path d="M12 2L13.8 8.2L20.2 10L14.8 13.5L16.5 19.8L12 16.2L7.5 19.8L9.2 13.5L3.8 10L10.2 8.2L12 2Z" />
+          {centerIcon === "moon" ? (
+            <path d="M20.6 15.79A9 9 0 0 1 8.21 3.4A9 9 0 1 0 20.6 15.79Z" />
+          ) : (
+            <path d="M12 2L13.8 8.2L20.2 10L14.8 13.5L16.5 19.8L12 16.2L7.5 19.8L9.2 13.5L3.8 10L10.2 8.2L12 2Z" />
+          )}
         </svg>
         <span className="absolute h-2 w-2 rounded-full bg-gold-400/40 animate-ping" />
       </motion.div>

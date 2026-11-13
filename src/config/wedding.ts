@@ -8,9 +8,9 @@ import { WeddingConfig } from "@/types/wedding";
 
 export const weddingConfig: WeddingConfig = {
   meta: {
-    title: "Muhammed Nazim HF & Nafeesathul Misriya Wafiya | Wedding Invitation",
+    title: "Muhammed Nazim HF & Nafeesathul Misriya Wafiyya | Wedding Invitation",
     description:
-      "Together with their beloved families, Muhammed Nazim HF (Son of Abdul Nasar & Shameema) and Nafeesathul Misriya Wafiya (Daughter of Haneefa AK & Juvariya) request the honour of your presence at their Nikah ceremony on Thursday, 24 December 2026 at CH Moidu Master Auditorium, Kariyad.",
+      "Together with their beloved families, Muhammed Nazim HF (Son of Abdul Nasar & Shameema) and Nafeesathul Misriya Wafiyya (Daughter of Haneefa AK & Juvariya) request the honour of your presence at their Nikah ceremony on Thursday, 24 December 2026 at CH Moidu Master Auditorium, Kariyad.",
   },
 
   // 1. Couple Details with Arabic Calligraphy & Beloved Parents
@@ -22,8 +22,8 @@ export const weddingConfig: WeddingConfig = {
       family: "",
     },
     bride: {
-      name: "Nafeesathul Misriya Wafiya",
-      arabicName: "نفيسة المصرية وافية",
+      name: "Nafeesathul Misriya Wafiyya",
+      arabicName: "نفيسة المصرية وفية",
       parents: "Daughter of Haneefa AK & Juvariya",
       family: "",
     },
@@ -64,14 +64,16 @@ export const weddingConfig: WeddingConfig = {
     {
       id: "nikah",
       title: "Nikah Ceremony & Wedding Feast",
-      subtitle: "Solemnization of Marriage & Celebrations",
+      subtitle: "The Beginning of Forever",
       date: "Thursday, 24 December 2026",
       time: "11:00 AM",
+      calendarStart: "2026-12-24T11:00:00+05:30",
+      calendarEnd: "2026-12-24T14:00:00+05:30",
       venueName: "CH Moidu Master Auditorium",
       address: "Kariyad, Kerala 673316",
       googleMapsUrl: "https://maps.app.goo.gl/8WGT85h5VVTHTeL17",
       icon: "nikah",
-      note: "Join us in prayer as the sacred marital vows are solemnized, followed by the traditional Kerala Muslim wedding banquet.",
+      note: "പരിശുദ്ധമായ നിക്കാഹ് കർമ്മത്തിലും തുടർന്ന് നടക്കുന്ന വിവാഹ സൽക്കാരത്തിലും പങ്കെടുത്ത് പ്രാർത്ഥനകളോടെ ഞങ്ങളോടൊപ്പം ചേരാൻ സ്നേഹപൂർവ്വം ക്ഷണിക്കുന്നു",
     },
   ],
 

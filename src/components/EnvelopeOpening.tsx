@@ -1,356 +1,187 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart } from "lucide-react";
-import confetti from "canvas-confetti";
+import React, { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { WeddingConfig } from "@/types/wedding";
-import { IslamicStarPattern, CornerOrnament } from "./IslamicPattern";
+import { CornerOrnament, IslamicStarPattern } from "./IslamicPattern";
 
 interface EnvelopeOpeningProps {
   config: WeddingConfig;
   onOpenComplete?: () => void;
+  onSealBreak?: () => void;
 }
 
-export const EnvelopeOpening: React.FC<EnvelopeOpeningProps> = ({
-  config,
-  onOpenComplete,
-}) => {
-  // States: 'closed' | 'opening' | 'showing' | 'transitioning'
-  const [phase, setPhase] = useState<"closed" | "opening" | "showing" | "transitioning">("closed");
+type Phase = "closed" | "opening" | "unsealed" | "revealed" | "entering";
+
+const cardSpring = { type: "spring", stiffness: 105, damping: 18, mass: 0.9 } as const;
+const flapTransition = { duration: 0.95, ease: [0.22, 1, 0.36, 1] } as const;
+
+export const EnvelopeOpening: React.FC<EnvelopeOpeningProps> = ({ config, onOpenComplete, onSealBreak }) => {
+  const [phase, setPhase] = useState<Phase>("closed");
   const [isDismissed, setIsDismissed] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const handleOpenEnvelope = () => {
+  const schedule = (callback: () => void, delay: number) => {
+    transitionTimers.current.push(setTimeout(callback, delay));
+  };
+
+  const handleOpen = () => {
     if (phase !== "closed") return;
+    onSealBreak?.();
     setPhase("opening");
-
-    // Launch soft gold confetti when card begins emerging
-    setTimeout(() => {
-      try {
-        confetti({
-          particleCount: 45,
-          spread: 65,
-          origin: { y: 0.55 },
-          colors: ["#D4AF37", "#ECC876", "#FFF8E1", "#1B4938", "#C5A059"],
-          ticks: 200,
-          gravity: 0.75,
-          scalar: 0.9,
-        });
-      } catch {
-        // Fallback
-      }
-      setPhase("showing");
-    }, 700);
+    schedule(() => setPhase("unsealed"), 620);
+    schedule(() => setPhase("revealed"), 1420);
   };
 
-  // When 'showing', display the card for 3 seconds, then automatically enter
+  useEffect(() => () => transitionTimers.current.forEach(clearTimeout), []);
+
   useEffect(() => {
-    if (phase === "showing") {
-      timerRef.current = setTimeout(() => {
-        enterMainSite();
-      }, 3000);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [phase]);
+    if (phase !== "revealed") return;
 
-  const enterMainSite = () => {
-    setPhase("transitioning");
-    setTimeout(() => {
-      setIsDismissed(true);
-      if (onOpenComplete) onOpenComplete();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 600);
-  };
+    const autoEnterTimer = window.setTimeout(() => {
+      setPhase("entering");
+      transitionTimers.current.push(
+        setTimeout(() => {
+          setIsDismissed(true);
+          onOpenComplete?.();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 640)
+      );
+    }, 3000);
+
+    return () => window.clearTimeout(autoEnterTimer);
+  }, [phase, onOpenComplete]);
 
   if (isDismissed) return null;
+
+  const { couple, mainEvent, bismillah } = config;
+  const isOpen = phase !== "closed";
+  const isCardLifted = phase === "unsealed" || phase === "revealed" || phase === "entering";
+  const isCardRevealed = phase === "revealed" || phase === "entering";
 
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 1 }}
-        animate={{
-          opacity: phase === "transitioning" ? 0 : 1,
-          scale: phase === "transitioning" ? 1.05 : 1,
-        }}
-        exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-emerald-950/98 p-3 sm:p-4 backdrop-blur-2xl overflow-y-auto min-h-[100dvh]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase === "entering" ? 0 : 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+        className="fixed inset-0 z-50 flex min-h-[100dvh] items-center justify-center overflow-hidden bg-emerald-950 p-4 sm:p-6"
       >
-        {/* Ambient Radial Gold Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(212,175,55,0.22)_0%,_rgba(13,40,30,0.7)_60%,_rgba(6,24,16,0.98)_100%)] pointer-events-none" />
-        <IslamicStarPattern opacity={0.07} className="text-gold-light" />
-
-        {/* Skip button in top corner with safe-area spacing */}
-        <button
-          type="button"
-          onClick={enterMainSite}
-          className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 text-[11px] sm:text-xs font-sans uppercase tracking-widest text-ivory-200/80 hover:text-gold-champagne transition-colors py-1.5 px-3 rounded-full hover:bg-emerald-900/60"
-        >
-          Skip Intro →
-        </button>
-
-        {/* Envelope Container - Calibrated to stay 100% within mobile view */}
-        <div className="relative flex flex-col items-center max-w-[320px] sm:max-w-md w-full my-auto py-4">
-          {/* Envelope Wrapper: glides down when opened so emerging card stays perfectly centered on mobile */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,_rgba(212,175,55,0.16)_0%,_rgba(2,12,8,0.97)_65%)]" />
+        <div className="relative my-auto flex w-full max-w-[480px] flex-col items-center [perspective:1800px]">
           <motion.div
-            animate={
-              phase === "closed"
-                ? { y: [0, -6, 0], scale: 1 }
-                : { y: 55, scale: 0.94 } // Moves down so card doesn't fly off top of screen
-            }
-            transition={
-              phase === "closed"
-                ? { repeat: Infinity, duration: 4.5, ease: "easeInOut" }
-                : { duration: 0.85, ease: [0.16, 1, 0.3, 1] }
-            }
-            className="relative w-full aspect-[4/3] max-h-[290px] sm:max-h-[360px] perspective-[1400px]"
+            animate={phase === "closed" ? { y: [0, -5, 0], rotateY: [0, 1.2, -1.2, 0] } : { y: phase === "entering" ? 70 : 20, scale: phase === "entering" ? 0.94 : 0.98 }}
+            transition={phase === "closed" ? { repeat: Infinity, duration: 6, ease: "easeInOut" } : { duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-full aspect-[5/3.5] max-h-[400px] [transform-style:preserve-3d]"
           >
-            {/* 1. Envelope Back Base (Royal Emerald) */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-emerald-900 via-emerald-850 to-emerald-950 border border-gold-500/50 shadow-2xl overflow-hidden">
-              <CornerOrnament position="top-left" size={28} />
-              <CornerOrnament position="top-right" size={28} />
-              <CornerOrnament position="bottom-left" size={28} />
-              <CornerOrnament position="bottom-right" size={28} />
-              <IslamicStarPattern opacity={0.08} className="text-gold-champagne" />
+            <div className="absolute inset-0 overflow-hidden rounded-lg border border-emerald-700/60 bg-gradient-to-br from-emerald-700 via-emerald-900 to-emerald-950 shadow-[0_28px_50px_-20px_rgba(0,0,0,0.9),inset_0_1px_rgba(255,255,255,0.13)]">
+              <div className="absolute inset-0 opacity-[0.12] [background-image:radial-gradient(rgba(255,255,255,0.28)_0.5px,transparent_0.5px)] [background-size:4px_4px]" />
+              <IslamicStarPattern opacity={0.035} className="text-gold-light" />
             </div>
 
-            {/* 2. Invitation Card - Slides out smoothly within safe vertical bounds */}
             <motion.div
-              initial={{ y: 0, scale: 0.94, opacity: 0.85 }}
-              animate={
-                phase !== "closed"
-                  ? {
-                      y: -85, // Calibrated so card top stays safely inside screen
-                      scale: 1.03,
-                      opacity: 1,
-                      zIndex: 35,
-                      transition: {
-                        delay: 0.25,
-                        duration: 1.1,
-                        ease: [0.16, 1, 0.3, 1],
-                      },
-                    }
-                  : { y: 0, scale: 0.94, opacity: 0.85, zIndex: 10 }
-              }
-              onClick={phase === "showing" ? enterMainSite : undefined}
-              className={`absolute inset-2 sm:inset-3 rounded-2xl bg-gradient-to-b from-white via-ivory-50 to-ivory-100 p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-2 border-gold-500/50 flex flex-col items-center justify-between text-center text-emerald-950 backdrop-blur-sm ${
-                phase === "showing" ? "cursor-pointer" : ""
-              }`}
+              animate={{ opacity: isCardLifted ? 0.72 : 0.28, scale: isCardRevealed ? 0.85 : 1 }}
+              transition={cardSpring}
+              className="pointer-events-none absolute inset-x-[8%] bottom-[9%] h-[18%] rounded-full bg-black blur-2xl"
+            />
+
+            <motion.div
+              initial={{ y: "3%", scale: 0.955 }}
+              animate={{
+                y: phase === "closed" || phase === "opening" ? "3%" : phase === "unsealed" ? "-28%" : "-65%",
+                scale: isCardRevealed ? 1 : 0.955,
+                rotateX: isCardRevealed ? 2 : 0,
+                rotateZ: isCardRevealed ? -0.7 : 0,
+                zIndex: 12,
+                boxShadow: isCardRevealed ? "0 32px 55px -18px rgba(0,0,0,0.78), 0 0 0 1px rgba(212,175,55,0.3)" : "0 12px 18px -12px rgba(0,0,0,0.72)",
+              }}
+              transition={cardSpring}
+              className="absolute inset-[1.5%] flex flex-col items-center overflow-hidden rounded bg-[#fdfbf7] p-4 text-emerald-950 shadow-lg sm:inset-[2%] sm:p-6"
             >
-              {/* Inner card border */}
-              <div className="pointer-events-none absolute inset-1 sm:inset-1.5 rounded-xl border border-gold-500/30" />
-
-              {/* Bismillah on Card */}
-              <div className="pt-0.5 w-full">
-                <p className="font-arabic text-gold-700 text-base sm:text-xl font-bold leading-normal block">
-                  {config.bismillah.arabic}
-                </p>
-                <div className="mt-0.5 flex items-center justify-center space-x-1.5 text-gold-600">
-                  <span className="h-[1px] w-4 bg-gold-500/40" />
-                  <span className="text-[8px] sm:text-[10px] uppercase tracking-[0.2em] font-bold text-emerald-800">
-                    Wedding Invitation
-                  </span>
-                  <span className="h-[1px] w-4 bg-gold-500/40" />
+              <div className="pointer-events-none absolute inset-0 opacity-[0.22] [background-image:radial-gradient(rgba(74,50,22,0.42)_0.45px,transparent_0.45px)] [background-size:3px_3px]" />
+              <div className="pointer-events-none absolute inset-[5%] rounded-sm border-[0.5px] border-gold-600/40" />
+              <div className="pointer-events-none absolute inset-[6.5%] rounded-sm border-[1.5px] border-gold-600/20" />
+              <div className="relative z-10 flex h-full w-full flex-col items-center justify-between py-2 text-center sm:py-4">
+                <div className="space-y-2">
+                  <p className="font-arabic text-sm text-gold-700/90 sm:text-lg">{bismillah.arabic}</p>
+                  <p className="text-[9px] font-medium uppercase tracking-[0.3em] text-emerald-900/60 sm:text-[10px]">The Wedding Celebration Of</p>
                 </div>
+                <div className="my-auto flex w-full flex-col items-center space-y-3 sm:space-y-4">
+                  <div className="flex flex-col items-center">
+                    {couple.groom.arabicName && <span className="mb-1 font-arabic text-sm text-gold-600/70">{couple.groom.arabicName}</span>}
+                    <h2 className="font-serif text-2xl font-normal tracking-wide text-emerald-950 sm:text-3xl">{couple.groom.name}</h2>
+                  </div>
+                  <div className="flex w-3/4 items-center justify-center space-x-3 text-gold-600">
+                    <div className="h-px flex-grow bg-gradient-to-r from-transparent via-gold-400 to-transparent opacity-50" />
+                    <span className="font-serif text-lg italic sm:text-xl">&amp;</span>
+                    <div className="h-px flex-grow bg-gradient-to-r from-transparent via-gold-400 to-transparent opacity-50" />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    {couple.bride.arabicName && <span className="mb-1 font-arabic text-sm text-gold-600/70">{couple.bride.arabicName}</span>}
+                    <h2 className="font-serif text-2xl font-normal tracking-wide text-emerald-950 sm:text-3xl">{couple.bride.name}</h2>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center space-y-1.5">
+                  <div className="mb-2 h-px w-12 bg-gold-400/50" />
+                  <p className="font-serif text-[11px] uppercase tracking-widest text-emerald-900 sm:text-xs">{mainEvent.date}</p>
+                  <p className="text-[10px] tracking-wider text-emerald-800/70 sm:text-[11px]">{mainEvent.time} | {mainEvent.venueName}</p>
+                </div>
+                <motion.span
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: isCardRevealed ? 1 : 0, y: isCardRevealed ? 0 : 4 }}
+                  transition={{ delay: isCardRevealed ? 0.28 : 0 }}
+                  className="absolute bottom-[6%] cursor-pointer border-b border-gold-400/50 pb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-gold-700"
+                >
+                  Opening your invitation
+                </motion.span>
               </div>
+            </motion.div>
 
-              {/* Couple Names (English + Arabic Calligraphy) */}
-              <div className="my-0.5 space-y-0.5 w-full">
-                {/* Groom */}
-                <div>
-                  {config.couple.groom.arabicName && (
-                    <p className="font-arabic text-gold-700 text-sm sm:text-lg font-bold leading-none">
-                      {config.couple.groom.arabicName}
-                    </p>
-                  )}
-                  <h2 className="font-serif text-base sm:text-2xl text-emerald-950 font-bold tracking-tight">
-                    {config.couple.groom.name}
-                  </h2>
-                </div>
+            <motion.div
+              animate={{ filter: isOpen ? "drop-shadow(0 -1px 3px rgba(0,0,0,0.18))" : "drop-shadow(0 -6px 16px rgba(0,0,0,0.38))" }}
+              transition={flapTransition}
+              className="pointer-events-none absolute inset-0 z-20"
+            >
+              <div className="absolute inset-0 rounded-bl-lg rounded-tl-lg border-r border-gold-500/15 bg-gradient-to-br from-emerald-700 to-emerald-900 shadow-[inset_-10px_0_18px_rgba(0,0,0,0.26)] [clip-path:polygon(0_0,50%_50%,0_100%)]" />
+              <div className="absolute inset-0 rounded-br-lg rounded-tr-lg border-l border-gold-500/15 bg-gradient-to-bl from-emerald-700 to-emerald-900 shadow-[inset_10px_0_18px_rgba(0,0,0,0.28)] [clip-path:polygon(100%_0,50%_50%,100%_100%)]" />
+              <div className="absolute inset-0 rounded-b-lg border-t border-white/10 bg-gradient-to-t from-emerald-950 via-emerald-900 to-emerald-800 shadow-[inset_0_12px_20px_rgba(0,0,0,0.26)] [clip-path:polygon(0_100%,50%_50%,100%_100%)]" />
+              <div className="absolute left-1/2 top-1/2 h-px w-[72%] -translate-x-1/2 -translate-y-1/2 rotate-[26deg] bg-gold-200/15 shadow-[0_1px_rgba(0,0,0,0.35)]" />
+              <div className="absolute left-1/2 top-1/2 h-px w-[72%] -translate-x-1/2 -translate-y-1/2 -rotate-[26deg] bg-gold-200/15 shadow-[0_1px_rgba(0,0,0,0.35)]" />
+            </motion.div>
 
-                {/* Heart divider */}
-                <div className="flex items-center justify-center space-x-1.5 text-gold-600 py-0.5">
-                  <span className="h-[1px] w-5 bg-gradient-to-r from-transparent to-gold-500/50" />
-                  <Heart className="h-2 w-2 fill-gold-500 text-gold-500" />
-                  <span className="h-[1px] w-5 bg-gradient-to-l from-transparent to-gold-500/50" />
-                </div>
-
-                {/* Bride */}
-                <div>
-                  {config.couple.bride.arabicName && (
-                    <p className="font-arabic text-gold-700 text-sm sm:text-lg font-bold leading-none">
-                      {config.couple.bride.arabicName}
-                    </p>
-                  )}
-                  <h2 className="font-serif text-base sm:text-2xl text-emerald-950 font-bold tracking-tight">
-                    {config.couple.bride.name}
-                  </h2>
-                </div>
+            <motion.div
+              animate={{ rotateX: isOpen ? -164 : 0, y: isOpen ? -2 : 0, zIndex: isOpen ? 5 : 30, filter: isOpen ? "drop-shadow(0 12px 10px rgba(0,0,0,0.35))" : "drop-shadow(0 10px 12px rgba(0,0,0,0.5))" }}
+              transition={flapTransition}
+              style={{ transformOrigin: "top center", transformStyle: "preserve-3d" }}
+              className="pointer-events-none absolute inset-x-0 top-0 h-full"
+            >
+              <div className="absolute inset-x-0 top-0 h-full rounded-t-lg border-b border-gold-500/25 bg-gradient-to-b from-emerald-700 via-emerald-800 to-emerald-950 [backface-visibility:hidden] [clip-path:polygon(0_0,100%_0,50%_55%)]">
+                <div className="absolute inset-0 opacity-[0.13] [background-image:radial-gradient(rgba(255,255,255,0.38)_0.5px,transparent_0.5px)] [background-size:4px_4px]" />
+                <div className="opacity-40"><CornerOrnament position="top-left" size={24} /></div>
+                <div className="opacity-40"><CornerOrnament position="top-right" size={24} /></div>
               </div>
-
-              {/* Venue & Date */}
-              <div className="pb-0.5 space-y-0.5">
-                <p className="text-[10px] sm:text-xs text-emerald-900 font-serif font-bold">
-                  {config.mainEvent.date} • {config.mainEvent.time}
-                </p>
-                <p className="text-[9px] sm:text-[11px] text-emerald-800/80 font-sans line-clamp-1">
-                  {config.mainEvent.venueName}, Kariyad
-                </p>
+              <div className="absolute inset-x-0 top-0 h-full border-t border-black/40 bg-gradient-to-b from-emerald-950 via-emerald-900 to-emerald-800 shadow-[inset_0_18px_30px_rgba(0,0,0,0.52)] [backface-visibility:hidden] [clip-path:polygon(0_0,100%_0,50%_55%)]" style={{ transform: "rotateX(180deg)" }}>
+                <IslamicStarPattern opacity={0.055} className="text-gold-300" />
               </div>
+            </motion.div>
 
-              {/* 3-Second Automatic Progress Bar Indicator */}
-              {phase === "showing" && (
-                <div className="absolute -bottom-1 inset-x-5 h-1 rounded-full bg-emerald-950/20 overflow-hidden">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 3, ease: "linear" }}
-                    className="h-full bg-gold-gradient"
-                  />
+            <AnimatePresence>
+              {phase === "closed" && (
+                <div className="absolute inset-x-0 top-[55%] z-40 flex -translate-y-1/2 justify-center">
+                  <motion.div initial={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.78, y: -5, rotate: -8 }} transition={{ duration: 0.3, ease: "easeOut" }} className="relative">
+                    <button type="button" onClick={handleOpen} aria-label="Break the wax seal and open the invitation" className="group relative flex h-20 w-20 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 sm:h-24 sm:w-24">
+                      <div className="absolute inset-0 rounded-[48%_52%_55%_45%_/_49%_51%_45%_55%] border border-yellow-300/30 bg-gradient-to-br from-[#d8a43a] via-[#a86e12] to-[#5b3105] shadow-[0_10px_20px_rgba(0,0,0,0.62),inset_0_2px_4px_rgba(255,255,255,0.5),inset_0_-5px_9px_rgba(0,0,0,0.48)]" />
+                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-yellow-900/70 bg-gradient-to-tl from-yellow-900 via-yellow-700 to-yellow-500 shadow-[inset_0_3px_5px_rgba(0,0,0,0.48),0_1px_2px_rgba(255,255,255,0.35)]">
+                        <span className="font-serif text-xl font-bold italic tracking-tighter text-yellow-100/85 sm:text-2xl">{couple.groom.name.charAt(0)}<span className="mx-1 text-sm">&amp;</span>{couple.bride.name.charAt(0)}</span>
+                      </div>
+                      <div className="absolute inset-[11%] rounded-full border border-yellow-100/20" />
+                    </button>
+                    <motion.p animate={{ opacity: [0.45, 0.95, 0.45] }} transition={{ repeat: Infinity, duration: 2.5 }} className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-[0.2em] text-gold-300">Break seal</motion.p>
+                  </motion.div>
                 </div>
               )}
-            </motion.div>
-
-            {/* 3. Envelope Pocket Overlays */}
-            <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden rounded-2xl">
-              <div
-                className="absolute inset-0 bg-gradient-to-tr from-emerald-950 via-emerald-900 to-emerald-850"
-                style={{
-                  clipPath: "polygon(0 0, 0 100%, 50% 50%)",
-                  filter: "drop-shadow(2px 0 6px rgba(0,0,0,0.4))",
-                }}
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-tl from-emerald-950 via-emerald-900 to-emerald-850"
-                style={{
-                  clipPath: "polygon(100% 0, 100% 100%, 50% 50%)",
-                  filter: "drop-shadow(-2px 0 6px rgba(0,0,0,0.4))",
-                }}
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-900 to-emerald-850 border-b border-gold-500/40 rounded-b-2xl"
-                style={{
-                  clipPath: "polygon(0 100%, 100% 100%, 50% 48%)",
-                  filter: "drop-shadow(0 -3px 8px rgba(0,0,0,0.45))",
-                }}
-              />
-            </div>
-
-            {/* 4. Top Flap with 3D Hinge Fold */}
-            <motion.div
-              initial={{ rotateX: 0 }}
-              animate={
-                phase !== "closed"
-                  ? {
-                      rotateX: 180,
-                      zIndex: 5,
-                      transition: {
-                        duration: 0.85,
-                        ease: [0.33, 1, 0.68, 1],
-                      },
-                    }
-                  : { rotateX: 0, zIndex: 30 }
-              }
-              style={{
-                transformOrigin: "top center",
-                transformStyle: "preserve-3d",
-              }}
-              className="absolute inset-x-0 top-0 h-1/2 pointer-events-none"
-            >
-              <div
-                className="w-full h-full bg-gradient-to-b from-emerald-850 via-emerald-900 to-emerald-950 border-t border-gold-500/50 rounded-t-2xl shadow-xl flex items-center justify-center"
-                style={{
-                  clipPath: "polygon(0 0, 100% 0, 50% 100%)",
-                  backfaceVisibility: "hidden",
-                }}
-              >
-                <div className="absolute top-2 flex items-center space-x-1.5 text-gold-500/70">
-                  <span className="h-[1px] w-4 bg-gold-500/30" />
-                  <span className="text-[8px] sm:text-[9px] tracking-[0.25em] font-sans uppercase font-medium">
-                    With Blessings
-                  </span>
-                  <span className="h-[1px] w-4 bg-gold-500/30" />
-                </div>
-              </div>
-
-              <div
-                className="w-full h-full bg-gradient-to-t from-gold-600 via-gold-champagne to-gold-light border-b border-gold-300 rounded-b-2xl shadow-inner flex items-center justify-center"
-                style={{
-                  clipPath: "polygon(0 100%, 100% 100%, 50% 0)",
-                  transform: "rotateX(180deg)",
-                  backfaceVisibility: "hidden",
-                }}
-              >
-                <IslamicStarPattern opacity={0.15} className="text-emerald-950" />
-              </div>
-            </motion.div>
-
-            {/* 5. Center Gold Wax Seal Button */}
-            {phase === "closed" && (
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
-                <button
-                  type="button"
-                  onClick={handleOpenEnvelope}
-                  className="group relative h-15 w-15 sm:h-20 sm:w-20 rounded-full p-1 shadow-gold-glow flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-105 active:scale-95 focus:outline-none"
-                  aria-label="Open Wedding Invitation Envelope"
-                >
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-light via-gold-500 to-gold-700 shadow-md" />
-                  <div className="relative h-full w-full rounded-full border border-gold-light/60 flex flex-col items-center justify-center bg-gradient-to-br from-gold-600 via-gold-700 to-gold-800 text-ivory-50 shadow-inner group-hover:from-gold-500 group-hover:to-gold-700 transition-colors">
-                    <Sparkles className="h-5 w-5 text-gold-light group-hover:rotate-12 transition-transform duration-300" />
-                    <span className="text-[8px] sm:text-[9px] uppercase tracking-widest font-bold text-gold-light mt-0.5">
-                      OPEN
-                    </span>
-                  </div>
-                </button>
-              </div>
-            )}
+            </AnimatePresence>
           </motion.div>
-
-          {/* Bottom Label & CTAs */}
-          <div className="mt-8 sm:mt-12 flex flex-col items-center text-center space-y-2 z-30 min-h-[65px]">
-            {phase === "closed" ? (
-              <div className="flex flex-col items-center space-y-2">
-                <p className="text-ivory-100 text-xs sm:text-sm tracking-wide font-sans">
-                  A sacred union blessed by Allah Almighty
-                </p>
-
-                <button
-                  onClick={handleOpenEnvelope}
-                  className="group relative inline-flex items-center space-x-2 rounded-full bg-gold-gradient px-7 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-emerald-950 shadow-gold transition-all duration-300 hover:shadow-gold-glow hover:scale-[1.03] active:scale-[0.98]"
-                >
-                  <Sparkles className="h-4 w-4 text-emerald-900 group-hover:rotate-45 transition-transform" />
-                  <span className="tracking-wider uppercase">Open Invitation</span>
-                  <Sparkles className="h-4 w-4 text-emerald-900 group-hover:-rotate-45 transition-transform" />
-                </button>
-
-                <span className="text-[10px] text-ivory-200/60 font-sans tracking-wider">
-                  Tap the wax seal or button to open
-                </span>
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col items-center space-y-1"
-              >
-                <div className="flex items-center space-x-1.5 text-gold-champagne text-xs font-semibold">
-                  <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                  <span>Entering wedding celebration...</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={enterMainSite}
-                  className="text-[11px] text-ivory-200/80 hover:text-white underline underline-offset-4 transition-colors"
-                >
-                  Tap here to enter right now →
-                </button>
-              </motion.div>
-            )}
-          </div>
         </div>
       </motion.div>
     </AnimatePresence>
