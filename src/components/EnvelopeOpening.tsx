@@ -124,7 +124,6 @@ export const EnvelopeOpening: React.FC<EnvelopeOpeningProps> = ({ config, onOpen
                 <div className="flex flex-col items-center space-y-1.5">
                   <div className="mb-2 h-px w-12 bg-gold-400/50" />
                   <p className="font-serif text-[11px] uppercase tracking-widest text-emerald-900 sm:text-xs">{mainEvent.date}</p>
-                  <p className="text-[10px] tracking-wider text-emerald-800/70 sm:text-[11px]">{mainEvent.time} | {mainEvent.venueName}</p>
                 </div>
               </div>
             </motion.div>

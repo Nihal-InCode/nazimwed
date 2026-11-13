@@ -21,8 +21,23 @@ export default function WeddingPage() {
     const audio = backgroundAudio.current;
     if (!audio) return;
 
-    audio.volume = 0.28;
-    void audio.play().catch(() => undefined);
+    audio.volume = 0;
+    void audio.play().then(() => {
+      const targetVolume = 0.28;
+      const fadeDurationMs = 1800;
+      const fadeStartedAt = performance.now();
+
+      const fadeIn = (now: number) => {
+        const progress = Math.max(
+          0,
+          Math.min((now - fadeStartedAt) / fadeDurationMs, 1)
+        );
+        audio.volume = targetVolume * progress;
+        if (progress < 1) requestAnimationFrame(fadeIn);
+      };
+
+      requestAnimationFrame(fadeIn);
+    }).catch(() => undefined);
   };
 
   return (
