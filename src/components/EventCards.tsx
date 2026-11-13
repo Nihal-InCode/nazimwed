@@ -110,19 +110,22 @@ export const EventCards: React.FC<EventCardsProps> = ({ events }) => {
                     className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gold-500/50 bg-emerald-900 shadow-md transition-all duration-300 hover:scale-110 hover:shadow-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2"
                   >
                     <motion.div
-                      animate={savedEventId === event.id ? { scale: [1, 1.65, 0.92, 1], rotate: [0, -8, 6, 0] } : { scale: 1, rotate: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      animate={savedEventId === event.id ? { scale: [1, 1.75, 0.88, 1.12, 1], rotate: [0, -10, 8, -3, 0] } : { scale: 1, rotate: 0 }}
+                      transition={{ duration: 0.58, times: [0, 0.28, 0.55, 0.78, 1], ease: [0.18, 0.89, 0.32, 1] }}
                       className="relative"
                     >
-                      <Heart className="h-6 w-6 fill-gold-500/20 text-gold-champagne" />
+                      <Heart
+                        className={`h-6 w-6 transition-colors duration-150 ${savedEventId === event.id ? "fill-[#ff4d3d] text-[#ff9a3d] drop-shadow-[0_0_8px_rgba(255,90,50,0.65)]" : "fill-gold-500/20 text-gold-champagne"}`}
+                        strokeWidth={savedEventId === event.id ? 2.8 : 2}
+                      />
                       <AnimatePresence>
                         {savedEventId === event.id && (
                           <motion.span
-                            initial={{ scale: 0.4, opacity: 0.9 }}
-                            animate={{ scale: 2.1, opacity: 0 }}
+                            initial={{ scale: 0.45, opacity: 0.75 }}
+                            animate={{ scale: 2.7, opacity: 0 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.55, ease: "easeOut" }}
-                            className="pointer-events-none absolute inset-0 rounded-full border-2 border-gold-300"
+                            transition={{ duration: 0.48, ease: "easeOut" }}
+                            className="pointer-events-none absolute -inset-1 rounded-full border-2 border-orange-400"
                           />
                         )}
                       </AnimatePresence>
