@@ -126,14 +126,6 @@ export const EnvelopeOpening: React.FC<EnvelopeOpeningProps> = ({ config, onOpen
                   <p className="font-serif text-[11px] uppercase tracking-widest text-emerald-900 sm:text-xs">{mainEvent.date}</p>
                   <p className="text-[10px] tracking-wider text-emerald-800/70 sm:text-[11px]">{mainEvent.time} | {mainEvent.venueName}</p>
                 </div>
-                <motion.span
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: isCardRevealed ? 1 : 0, y: isCardRevealed ? 0 : 4 }}
-                  transition={{ delay: isCardRevealed ? 0.28 : 0 }}
-                  className="absolute bottom-[6%] cursor-pointer border-b border-gold-400/50 pb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-gold-700"
-                >
-                  Opening your invitation
-                </motion.span>
               </div>
             </motion.div>
 
